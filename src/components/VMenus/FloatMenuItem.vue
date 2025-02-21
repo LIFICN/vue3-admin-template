@@ -112,6 +112,9 @@ function menuClick() {
   transform: rotateZ(270deg);
 
   svg {
+    width: 100%;
+    height: 100%;
+
     path {
       fill: var(--menuArrowColor);
     }

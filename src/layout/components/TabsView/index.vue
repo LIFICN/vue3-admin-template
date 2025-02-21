@@ -153,6 +153,11 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
       width: 16px;
       height: 16px;
       overflow: hidden;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 

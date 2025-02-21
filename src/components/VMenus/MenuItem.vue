@@ -149,6 +149,9 @@ watch(
   transition: transform 0.3s ease-in-out;
 
   svg {
+    width: 100%;
+    height: 100%;
+
     path {
       fill: var(--menuArrowColor);
     }
