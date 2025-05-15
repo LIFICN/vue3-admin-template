@@ -60,7 +60,7 @@ const paddingLeftStyle = computed(() => {
 })
 
 const isActiveSubmenuItem = computed(() => {
-  return treeParentMap.value[activeKey.value]?.includes(props.item) || false
+  return treeParentMap.value[activeKey.value]?.some((k) => k.key === props.item.key) || false
 })
 
 const isActiveMenuItem = computed(() => {
@@ -101,7 +101,7 @@ watch(
     //如果主菜单折叠则关闭已展开二级菜单
     if (collapse.value && props.expand) emits('update:expand', false)
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 

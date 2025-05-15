@@ -52,7 +52,7 @@ const isSubmenuItem = computed(() => props.item.children && props.item.children.
 const paddingLeftStyle = computed(() => 1 * 16 + 'px')
 
 const isActiveSubmenuItem = computed(() => {
-  return treeParentMap.value[activeKey.value]?.includes(props.item) || false
+  return treeParentMap.value[activeKey.value]?.some((t) => t.key === props.item.key) || false
 })
 
 const isActiveMenuItem = computed(() => {

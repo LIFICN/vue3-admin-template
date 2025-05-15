@@ -60,7 +60,7 @@ export const constantRoutes = [
       {
         path: '',
         component: Table,
-        meta: { title: 'tabel', icon: 'Polygon' },
+        meta: { title: 'table', icon: 'Polygon' },
       },
     ],
   },
