@@ -81,10 +81,11 @@ onBeforeUnmount(() => {
 })
 
 //清除掉mouse leave事件逻辑
-let timer = null
+const leaveTimer = ref(null)
+const removeContentTimer = ref(null)
 
 function slotMouseEnter() {
-  resetTimer()
+  resetLeaveTimer()
   isMouseInSlot.value = true
   if (collapse.value) updatePosition()
 }
@@ -95,7 +96,7 @@ function slotMouseLeave() {
 
 function tooltipMouseEnter() {
   isMouseInSlot.value = true
-  resetTimer()
+  resetLeaveTimer()
 }
 
 function tooltipMouseLeave() {
@@ -104,35 +105,38 @@ function tooltipMouseLeave() {
 
 function closeClick() {
   isMouseInSlot.value = false
-  timer = null
+  leaveTimer.value = null
 }
 
 //解决两个元素切换触发mouse leave关闭弹窗的问题
 function startCloseTimeout() {
-  timer = setTimeout(() => {
+  leaveTimer.value = setTimeout(() => {
     isMouseInSlot.value = false
-    timer = null
+    leaveTimer.value = null
   }, 300)
 }
 
-function resetTimer() {
-  timer && clearTimeout(timer)
-  timer = null
+function resetLeaveTimer() {
+  leaveTimer.value && clearTimeout(leaveTimer.value)
+  leaveTimer.value = null
 }
 
 watch(
   () => mergeShow.value,
   (newVal) => {
     if (newVal) {
+      //清除掉延时清除内容的定时器，并展示菜单内容
+      removeContentTimer.value && clearTimeout(removeContentTimer.value)
+      removeContentTimer.value = null
       isCreateContent.value = true
       return
     }
 
     //控制关闭动画时机，因为父元素内容是子元素撑开的
     nextTick(() => {
-      setTimeout(() => (isCreateContent.value = false), 300)
+      removeContentTimer.value = setTimeout(() => (isCreateContent.value = false), 300)
     })
-  }
+  },
 )
 </script>
 
@@ -156,7 +160,10 @@ watch(
     border-radius: 8px;
     white-space: nowrap;
     min-width: 160px;
-    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 6px 16px 0 rgba(0, 0, 0, 0.08),
+      0 3px 6px -4px rgba(0, 0, 0, 0.12),
+      0 9px 28px 8px rgba(0, 0, 0, 0.05);
     position: relative;
 
     &::before {
