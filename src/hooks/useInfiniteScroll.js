@@ -1,4 +1,4 @@
-import { onMounted, readonly, ref } from 'vue'
+import { onMounted, readonly, ref, onUnmounted } from 'vue'
 
 export default function useInfiniteScroll(containerSelctor, loadMore, offset = 10) {
   const isLoading = ref(false)
