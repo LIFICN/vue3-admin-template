@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "allowJs": true,
-        "forceConsistentCasingInFileNames": false, // 是否开启ts文件系统大小写敏感;类型文件名大小写不同错误。
-        "outDir": "dist",
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist/**/*"]
-}

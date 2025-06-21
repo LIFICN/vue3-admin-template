@@ -1,4 +1,4 @@
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch, isRef } from 'vue'
 
 function debounceRAF(func) {
   let id = null
@@ -29,22 +29,23 @@ export default function useVirtualList(
     size: 10,
     bufferSize: 10,
     keyField: '',
-    itemHeight: 10,
+    itemHeight: 20,
   }
 ) {
   const {
+    dataSource,
     scrollContainer,
     contentContainer,
     itemContainer,
     size = 10,
-    bufferSize = 4,
+    bufferSize = 10,
     keyField = '',
-    itemHeight = 10,
+    itemHeight = 20,
   } = config || {}
 
-  if (!scrollContainer || !contentContainer || !itemContainer || !keyField || !itemHeight)
+  if (!isRef(dataSource) || !scrollContainer || !contentContainer || !itemContainer || !keyField || !itemHeight)
     throw new Error(
-      'The parameters `scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
+      'The parameters `dataSource` `scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
     )
 
   const sourceList = ref([])
@@ -64,7 +65,7 @@ export default function useVirtualList(
   const getItemKey = (index) => (sourceList.value[index] && sourceList.value[index][keyField]) || ''
 
   watch(
-    () => config.dataSource?.value?.slice(),
+    () => dataSource?.value?.slice(),
     (newVal, oldVal) => {
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
@@ -124,7 +125,7 @@ export default function useVirtualList(
     resizeObserver = new ResizeObserver(
       debounce(async function () {
         await updateItemSize()
-      }, 120)
+      }, 100)
     )
 
     resizeObserver.observe(contentContainerEl)
@@ -144,7 +145,7 @@ export default function useVirtualList(
     const preStartTop = getItemTop(startTopKey) || 0
     if (scrollTop > preStartTop && scrollTop <= preStartTop + getItemHeight(startTopKey)) return
 
-    //根据已渲染的item key，双指针查找匹配符合scrolltop的key，计算出符合的index
+    //根据已渲染的item key，二分查找匹配符合scrolltop的key，计算出符合的index
     const topKey = binarySearch(scrollTop)
     if (!topKey || startTopKey == topKey) return
     startTopKey = topKey
@@ -194,15 +195,8 @@ export default function useVirtualList(
   }
 
   function transformToStart() {
-    //计算开始部分缓冲区高度
-    let bufferStartHeight = 0
-    if (bufferStartIndex >= 0 && bufferStartIndex != startIndex) {
-      sourceList.value.slice(bufferStartIndex, startIndex).forEach((el) => {
-        bufferStartHeight += getItemHeight(el[keyField])
-      })
-    }
-    //动态定位到start位置
-    const transformTop = getItemTop(startTopKey) - bufferStartHeight
+    //动态定位到start位置,由于添加了缓冲区所以滚动的top取值应该是缓冲区第一项(bufferStartIndex)的top值
+    const transformTop = getItemTop((sliceData.value[0] || {})[keyField] || '')
     if (transformTop < 0) return
     contentContainerEl.style.transform = `translateY(${transformTop}px)`
   }
@@ -222,7 +216,7 @@ export default function useVirtualList(
     //更新时间不固定，会导致高度，滚动错位，需要再次计算
     transformToStart()
     updateHeight()
-  }, 60)
+  }, 50)
 
   // 二分查找算法，配合检索虚拟列表scrolltop魔改，非原版通用
   function binarySearch(scrollTop) {
