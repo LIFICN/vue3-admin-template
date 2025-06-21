@@ -45,7 +45,7 @@ export default function useVirtualList(
 
   if (!isRef(dataSource) || !scrollContainer || !contentContainer || !itemContainer || !keyField || !itemHeight)
     throw new Error(
-      'The parameters `dataSource` `scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
+      'The parameters `dataSource`, `scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
     )
 
   const sourceList = ref([])
