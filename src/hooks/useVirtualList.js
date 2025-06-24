@@ -21,6 +21,7 @@ function debounce(func, wait = 100) {
 }
 
 export default function useVirtualList(
+  dataSource,
   config = {
     scrollContainer: '',
     contentContainer: '',
@@ -33,7 +34,6 @@ export default function useVirtualList(
   }
 ) {
   const {
-    dataSource,
     scrollContainer,
     contentContainer,
     itemContainer,
@@ -45,7 +45,7 @@ export default function useVirtualList(
 
   if (!isRef(dataSource) || !scrollContainer || !contentContainer || !itemContainer || !keyField || !itemHeight)
     throw new Error(
-      'The parameters `dataSource`, `scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
+      'The parameters `dataSource`,`scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
     )
 
   const sourceList = ref([])
@@ -104,7 +104,7 @@ export default function useVirtualList(
 
       updateData()
     },
-    { deep: true, immediate: true }
+    { immediate: true }
   )
 
   onMounted(() => {
@@ -120,12 +120,13 @@ export default function useVirtualList(
     contentContainerEl.style.position = 'absolute'
     contentContainerEl.style.top = 0
     contentContainerEl.style.left = 0
+    contentContainerEl.style.width = '100%'
 
     //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
     resizeObserver = new ResizeObserver(
       debounce(async function () {
         await updateItemSize()
-      }, 100)
+      }, 200)
     )
 
     resizeObserver.observe(contentContainerEl)

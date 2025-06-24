@@ -32,15 +32,15 @@ const dataSource = ref(
       el: index + 1,
       text: generateRandomText(),
       key: index + 1,
-    }))
+    })),
 )
 
-const { sliceData, scrollTo } = useVirtualList({
+const { sliceData, scrollTo } = useVirtualList(dataSource, {
   scrollContainer: '.test-scroll',
   contentContainer: '.test-content',
   itemContainer: '.test-content-item',
-  dataSource,
-  bufferSize: 4,
+  size: 20,
+  bufferSize: 10,
   keyField: 'key',
   itemHeight: 40,
 })
@@ -83,7 +83,6 @@ function edit(type) {
   overflow-y: auto;
 
   .test-content {
-    width: 100%;
     will-change: transform;
 
     .test-content-item {
