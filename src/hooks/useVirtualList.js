@@ -4,7 +4,7 @@ function debounceRAF(func) {
   let id = null
   return function () {
     id && cancelAnimationFrame(id)
-    requestAnimationFrame(() => {
+    id = requestAnimationFrame(() => {
       func?.apply(this, arguments)
     })
   }
@@ -21,17 +21,16 @@ function debounce(func, wait = 100) {
 }
 
 export default function useVirtualList(
-  dataSource,
+  dataSourceRef,
   config = {
     scrollContainer: '',
     contentContainer: '',
     itemContainer: '',
-    dataSource: [],
     size: 10,
     bufferSize: 10,
     keyField: '',
-    itemHeight: 20,
-  }
+    itemHeight: 30,
+  },
 ) {
   const {
     scrollContainer,
@@ -40,12 +39,12 @@ export default function useVirtualList(
     size = 10,
     bufferSize = 10,
     keyField = '',
-    itemHeight = 20,
+    itemHeight = 30,
   } = config || {}
 
-  if (!isRef(dataSource) || !scrollContainer || !contentContainer || !itemContainer || !keyField || !itemHeight)
+  if (!isRef(dataSourceRef) || !scrollContainer || !contentContainer || !itemContainer || !keyField)
     throw new Error(
-      'The parameters `dataSource`,`scrollContainer`,`contentContainer`,`itemContainer`,`keyField`,`itemHeight` cannot be null'
+      'The parameters `dataSourceRef`,`scrollContainer`,`contentContainer`,`itemContainer`,`keyField` cannot be null',
     )
 
   const sourceList = ref([])
@@ -65,7 +64,7 @@ export default function useVirtualList(
   const getItemKey = (index) => (sourceList.value[index] && sourceList.value[index][keyField]) || ''
 
   watch(
-    () => dataSource?.value?.slice(),
+    () => dataSourceRef?.value?.slice(),
     (newVal, oldVal) => {
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
@@ -104,7 +103,7 @@ export default function useVirtualList(
 
       updateData()
     },
-    { immediate: true }
+    { immediate: true },
   )
 
   onMounted(() => {
@@ -126,7 +125,7 @@ export default function useVirtualList(
     resizeObserver = new ResizeObserver(
       debounce(async function () {
         await updateItemSize()
-      }, 200)
+      }, 200),
     )
 
     resizeObserver.observe(contentContainerEl)
