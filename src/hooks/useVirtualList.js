@@ -56,6 +56,7 @@ export default function useVirtualList(
   let itemResized = false //容器，item尺寸是否改变
   let keyIndexObj = {} //key-index对照
   let startTopKey = null //记录上一次滚动开始item key
+  let measuredCount = 0 //记录已测量item数量
 
   const itemSizeMap = new Map()
   const getItemHeight = (key) => itemSizeMap.get(key)?.height || itemHeight || 0
@@ -76,6 +77,7 @@ export default function useVirtualList(
         keyIndexObj = {}
         startIndex = 0
         bufferStartIndex = -1
+        measuredCount = 0
         nextTick(() => {
           if (!phantomDivEl || !contentContainerEl) return
           phantomDivEl.style.height = `0px`
@@ -107,8 +109,8 @@ export default function useVirtualList(
   )
 
   onMounted(() => {
-    scrollContainerEl = document.querySelector(scrollContainer)
-    contentContainerEl = document.querySelector(contentContainer)
+    scrollContainerEl = isRef(scrollContainer) ? scrollContainer.value : document.querySelector(scrollContainer)
+    contentContainerEl = isRef(contentContainer) ? contentContainer.value : document.querySelector(contentContainer)
     if (!scrollContainerEl || !contentContainerEl) return
 
     scrollContainerEl.addEventListener('scroll', handleScroll)
@@ -124,6 +126,7 @@ export default function useVirtualList(
     //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
     resizeObserver = new ResizeObserver(
       debounce(async function () {
+        itemResized = true
         await updateItemSize()
       }, 200),
     )
@@ -133,7 +136,7 @@ export default function useVirtualList(
 
   onBeforeUnmount(() => {
     resizeObserver?.disconnect()
-    scrollContainerEl?.remove('scroll', handleScroll)
+    scrollContainerEl?.removeEventListener('scroll', handleScroll)
   })
 
   //获取当前已渲染的item dom
@@ -158,29 +161,28 @@ export default function useVirtualList(
   })
 
   function updateData() {
-    let nBufSize = bufferSize || 1
+    let nBufSize = bufferSize || 10
     //计算起始索引
-    bufferStartIndex = startIndex < nBufSize ? 0 : startIndex - nBufSize >= 0 ? startIndex - nBufSize : startIndex
+    bufferStartIndex = Math.max(startIndex - nBufSize, 0)
     //计算结束索引
-    let endSum = startIndex + size + nBufSize
-    let end = endSum >= sourceList.value.length ? sourceList.value.length : endSum
+    let end = Math.min(startIndex + (size || 10) + nBufSize, sourceList.value.length)
     sliceData.value = sourceList.value.slice(bufferStartIndex, end)
   }
 
   async function updateItemSize() {
     //如果以更新到最后一项item数据，不再遍历，但是数据，高度变化，重新计算
     const allLength = sourceList.value.length
-    if (allLength <= 0 || (!itemResized && itemSizeMap.length == allLength)) return
+    if (allLength <= 0 || (!itemResized && measuredCount == allLength)) return
     itemResized = false
 
     await nextTick()
     const els = getCurrentRenderedItem()
     //动态缓存列表项最新高度, top
     for (let index = 0; index < els.length; index++) {
-      const el = els[index]
+      const ofsh = els[index]?.offsetHeight
       const key = sliceData.value[index][keyField]
-      const ofsh = el.offsetHeight
-      if (getItemHeight(key) != ofsh) setItemSize(key, { height: ofsh })
+      if (!itemSizeMap.get(key)?.measured && !itemResized) measuredCount++
+      if (getItemHeight(key) != ofsh) setItemSize(key, { height: ofsh, measured: true })
     }
 
     calcItemTop()
