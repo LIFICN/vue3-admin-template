@@ -9,7 +9,7 @@
 
     <div class="test-scroll">
       <div class="test-content">
-        <div v-for="(item, index) in sliceData" :key="index" class="test-content-item">
+        <div v-for="item in sliceData" :key="item.key" class="test-content-item">
           <img
             src="https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png"
             style="width: 47px; height: 47px; border-radius: 50%"
@@ -42,7 +42,7 @@ const { sliceData, scrollTo } = useVirtualList(dataSource, {
   size: 20,
   bufferSize: 10,
   keyField: 'key',
-  itemHeight: 40,
+  itemHeight: 50,
 })
 
 function generateRandomText() {
