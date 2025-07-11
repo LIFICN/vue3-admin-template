@@ -84,7 +84,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
       //对比出不存在的key，移除已缓存
       oldVal?.forEach((el) => {
         const key = el[keyField]
-        if (isNaN(keyIndexObj[key]) && itemSizeMap.has(key)) itemSizeMap.delete(key)
+        if (typeof keyIndexObj[key] != 'number' && itemSizeMap.has(key)) itemSizeMap.delete(key)
       })
 
       updateData().then(() => updateItemSize(null, true))
