@@ -4,9 +4,7 @@ function debounceRAF(func) {
   let id = null
   return function () {
     id && cancelAnimationFrame(id)
-    id = requestAnimationFrame(() => {
-      func?.apply(this, arguments)
-    })
+    id = requestAnimationFrame(() => func?.apply(this, arguments))
   }
 }
 
@@ -14,24 +12,11 @@ function debounce(func, wait = 100) {
   let timer = null
   return function () {
     timer && clearTimeout(timer)
-    timer = setTimeout(() => {
-      func?.apply(this, arguments)
-    }, wait)
+    timer = setTimeout(() => func?.apply(this, arguments), wait)
   }
 }
 
-export default function useVirtualList(
-  dataSourceRef,
-  config = {
-    scrollContainer: '',
-    contentContainer: '',
-    itemContainer: '',
-    size: 10,
-    bufferSize: 10,
-    keyField: '',
-    itemHeight: 30,
-  },
-) {
+export default function useVirtualList(dataSourceRef, config = {}) {
   const {
     scrollContainer,
     contentContainer,
@@ -52,8 +37,7 @@ export default function useVirtualList(
   let scrollContainerEl, contentContainerEl, phantomDivEl
   let startIndex = 0 //实际滚动定位起始索引
   let bufferStartIndex = -1 //起始缓存索引
-  let resizeObserver = null
-  let itemResized = false //容器，item尺寸是否改变
+  let forceRecalculate = false //item变化，强制重新测量
   let keyIndexObj = {} //key-index对照
   let measuredCount = 0 //记录已测量item数量
 
@@ -63,12 +47,19 @@ export default function useVirtualList(
   const setItemSize = (key, obj = {}) => itemSizeMap.set(key, { ...itemSizeMap.get(key), ...obj })
   const getItemKey = (index) => (sourceList.value[index] && sourceList.value[index][keyField]) || ''
 
+  //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
+  const callback = debounce(function (e) {
+    updateItemSize(e.map((el) => el.target))
+  }, 20)
+
+  const resizeObserver = new ResizeObserver(callback)
+
   watch(
     () => dataSourceRef?.value?.slice(),
     (newVal, oldVal) => {
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
-      itemResized = true
+      forceRecalculate = true
 
       if (!sourceList.value?.length) {
         itemSizeMap.clear()
@@ -95,13 +86,12 @@ export default function useVirtualList(
       })
 
       //对比出不存在的key，移除已缓存
-      oldVal
-        ?.filter((el) => isNaN(keyIndexObj[el[keyField]]))
-        ?.forEach((key) => {
-          if (itemSizeMap.get(key)) itemSizeMap.delete(key)
-        })
+      oldVal?.forEach((el) => {
+        const key = el[keyField]
+        if (isNaN(keyIndexObj[key]) && itemSizeMap.has(key)) itemSizeMap.delete(key)
+      })
 
-      updateData()
+      updateData().then(() => updateItemSize())
     },
     { immediate: true },
   )
@@ -120,16 +110,11 @@ export default function useVirtualList(
     contentContainerEl.style.top = 0
     contentContainerEl.style.left = 0
     contentContainerEl.style.width = '100%'
-
-    //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
-    const callback = debounce(function (e) {
-      updateItemSize(e.map((el) => el.target))
-    }, 20)
-
-    resizeObserver = new ResizeObserver(callback)
   })
 
   onBeforeUnmount(() => {
+    itemSizeMap.clear()
+    keyIndexObj = null
     resizeObserver?.disconnect()
     scrollContainerEl?.removeEventListener('scroll', handleScroll)
   })
@@ -169,8 +154,8 @@ export default function useVirtualList(
   function updateItemSize(elArr = null) {
     //如果以更新到最后一项item数据，不再遍历，但是数据，高度变化，重新计算
     const allLength = sourceList.value.length
-    if (allLength <= 0 || (!itemResized && measuredCount == allLength)) return
-    itemResized = false
+    if (allLength <= 0 || (!forceRecalculate && measuredCount == allLength)) return
+    forceRecalculate = false
 
     const els = elArr || getCurrentRenderedItem()
     if (!els || !els.length) return
@@ -178,7 +163,7 @@ export default function useVirtualList(
     for (let index = 0; index < els.length; index++) {
       const ofsh = els[index]?.offsetHeight
       const key = sliceData.value[index][keyField]
-      if (!itemSizeMap.get(key)?.measured && !itemResized) measuredCount++
+      if (!itemSizeMap.get(key)?.measured && !forceRecalculate) measuredCount++
       if (getItemHeight(key) != ofsh) setItemSize(key, { height: ofsh, measured: true })
     }
 
@@ -195,9 +180,8 @@ export default function useVirtualList(
 
   function transformToStart() {
     //动态定位到start位置,由于添加了缓冲区所以滚动的top取值应该是缓冲区第一项(bufferStartIndex)的top值
-    const transformTop = getItemTop((sliceData.value[0] || {})[keyField] || '')
-    if (transformTop < 0) return
-    contentContainerEl.style.transform = `translateY(${transformTop}px)`
+    const transformTop = getItemTop(getItemKey(bufferStartIndex))
+    if (transformTop >= 0) contentContainerEl.style.transform = `translateY(${transformTop}px)`
   }
 
   //计算所有已渲染的item top值
