@@ -37,9 +37,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   let scrollContainerEl, contentContainerEl, phantomDivEl
   let startIndex = 0 //实际滚动定位起始索引
   let bufferStartIndex = -1 //起始缓存索引
-  let forceRecalculate = false //item变化，强制重新测量
   let keyIndexObj = {} //key-index对照
-  let measuredCount = 0 //记录已测量item数量
 
   const itemSizeMap = new Map()
   const getItemHeight = (key) => itemSizeMap.get(key)?.height || itemHeight || 0
@@ -59,14 +57,12 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     (newVal, oldVal) => {
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
-      forceRecalculate = true
 
       if (!sourceList.value?.length) {
         itemSizeMap.clear()
         keyIndexObj = {}
         startIndex = 0
         bufferStartIndex = -1
-        measuredCount = 0
         nextTick(() => {
           if (!phantomDivEl || !contentContainerEl) return
           phantomDivEl.style.height = `0px`
@@ -91,7 +87,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
         if (isNaN(keyIndexObj[key]) && itemSizeMap.has(key)) itemSizeMap.delete(key)
       })
 
-      updateData().then(() => updateItemSize())
+      updateData().then(() => updateItemSize(null, true))
     },
     { immediate: true },
   )
@@ -151,22 +147,22 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     getCurrentRenderedItem().forEach((el) => resizeObserver?.observe(el))
   }
 
-  function updateItemSize(elArr = null) {
-    //如果以更新到最后一项item数据，不再遍历，但是数据，高度变化，重新计算
-    const allLength = sourceList.value.length
-    if (allLength <= 0 || (!forceRecalculate && measuredCount == allLength)) return
-    forceRecalculate = false
-
+  function updateItemSize(elArr = null, itemResized = false) {
+    if (sourceList.value?.length <= 0) return
     const els = elArr || getCurrentRenderedItem()
     if (!els || !els.length) return
     //动态缓存列表项最新高度, top
+    let changeFlag = itemResized || false
     for (let index = 0; index < els.length; index++) {
       const ofsh = els[index]?.offsetHeight
       const key = sliceData.value[index][keyField]
-      if (!itemSizeMap.get(key)?.measured && !forceRecalculate) measuredCount++
-      if (getItemHeight(key) != ofsh) setItemSize(key, { height: ofsh, measured: true })
+      if (getItemHeight(key) != ofsh) {
+        changeFlag = true
+        setItemSize(key, { height: ofsh })
+      }
     }
 
+    if (!changeFlag) return
     updateItemOffset()
     updateHeight()
   }
@@ -174,8 +170,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   const updateHeight = () => {
     //更新总高度
     const endKey = getItemKey(sourceList.value.length - 1)
-    if (!endKey) return
-    phantomDivEl.style.height = `${getItemTop(endKey) + getItemHeight(endKey)}px`
+    if (endKey) phantomDivEl.style.height = `${getItemTop(endKey) + getItemHeight(endKey)}px`
   }
 
   function transformToStart() {
@@ -219,7 +214,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   function scrollTo(index) {
     const itemKey = getItemKey(index)
     if (!itemKey || getItemTop(itemKey) < 0 || !scrollContainerEl) return
-    scrollContainerEl.scrollTop = getItemTop(itemKey)
+    requestAnimationFrame(() => (scrollContainerEl.scrollTop = getItemTop(itemKey)))
   }
 
   return { sliceData, scrollTo }
