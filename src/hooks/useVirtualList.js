@@ -48,7 +48,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
   const callback = debounce(function (e) {
     updateItemSize(e.map((el) => el.target))
-  }, 20)
+  }, 70)
 
   const resizeObserver = new ResizeObserver(callback)
 
@@ -102,10 +102,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     phantomDivEl.style.height = `${sourceList.value.length * itemHeight || 0}px`
     scrollContainerEl.appendChild(phantomDivEl)
     scrollContainerEl.style.position = 'relative'
-    contentContainerEl.style.position = 'absolute'
-    contentContainerEl.style.top = 0
-    contentContainerEl.style.left = 0
-    contentContainerEl.style.width = '100%'
+    contentContainerEl.style.cssText += 'position:absolute;top:0;left:0;width:100%;'
   })
 
   onBeforeUnmount(() => {
@@ -179,8 +176,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     if (transformTop >= 0) contentContainerEl.style.transform = `translateY(${transformTop}px)`
   }
 
-  //计算所有已渲染的item top值
-  const updateItemOffset = debounce(function () {
+  //计算所有已渲染的item top值, 主要性能瓶颈
+  const updateItemOffset = function () {
     if (!sourceList.value?.length) return
     //获取最新渲染列表，开始item的top，向下批量更新
     let bufferStartTop = getItemTop(getItemKey(bufferStartIndex))
@@ -194,7 +191,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     //更新时间不固定，会导致高度，滚动错位，需要再次计算
     transformToStart()
     updateHeight()
-  }, 50)
+  }
 
   // 二分查找算法，配合检索虚拟列表scrolltop魔改，非原版通用
   function binarySearch(scrollTop) {
