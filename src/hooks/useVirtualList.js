@@ -87,7 +87,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
         if (typeof keyIndexObj[key] != 'number' && itemSizeMap.has(key)) itemSizeMap.delete(key)
       })
 
-      updateData().then(() => updateItemSize(null, true))
+      updateData().then(() => updateItemSize(null, true, true))
     },
     { immediate: true },
   )
@@ -144,7 +144,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     getCurrentRenderedItem().forEach((el) => resizeObserver?.observe(el))
   }
 
-  function updateItemSize(elArr = null, itemResized = false) {
+  function updateItemSize(elArr = null, itemResized = false, isCalcAll = false) {
     if (sourceList.value?.length <= 0) return
     const els = elArr || getCurrentRenderedItem()
     if (!els || !els.length) return
@@ -160,28 +160,29 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     }
 
     if (!changeFlag) return
-    updateItemOffset()
+    updateItemOffset(isCalcAll)
     updateHeight()
   }
 
   const updateHeight = () => {
-    //更新总高度
     const endKey = getItemKey(sourceList.value.length - 1)
-    if (endKey) phantomDivEl.style.height = `${getItemTop(endKey) + getItemHeight(endKey)}px`
+    const height = getItemTop(endKey) + getItemHeight(endKey)
+    if (endKey && Math.abs(phantomDivEl.clientHeight) != height) phantomDivEl.style.height = `${height}px`
   }
 
   function transformToStart() {
     //动态定位到start位置,由于添加了缓冲区所以滚动的top取值应该是缓冲区第一项(bufferStartIndex)的top值
-    const transformTop = getItemTop(getItemKey(bufferStartIndex))
-    if (transformTop >= 0) contentContainerEl.style.transform = `translateY(${transformTop}px)`
+    const transformStr = `translateY(${getItemTop(getItemKey(bufferStartIndex))}px)`
+    if (!contentContainerEl.style.cssText.includes(transformStr)) contentContainerEl.style.transform = transformStr
   }
 
   //计算所有已渲染的item top值, 主要性能瓶颈
-  const updateItemOffset = function () {
+  const updateItemOffset = function (isCalcAll = false) {
     if (!sourceList.value?.length) return
     //获取最新渲染列表，开始item的top，向下批量更新
-    let bufferStartTop = getItemTop(getItemKey(bufferStartIndex))
-    for (let index = bufferStartIndex; index < sourceList.value.length; index++) {
+    const position = isCalcAll ? 0 : bufferStartIndex
+    let bufferStartTop = isCalcAll ? 0 : getItemTop(getItemKey(position))
+    for (let index = position; index < sourceList.value.length; index++) {
       const itemKey = getItemKey(index)
       setItemSize(itemKey, { top: bufferStartTop })
       const offsetHeight = getItemHeight(itemKey)

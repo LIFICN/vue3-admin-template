@@ -54,6 +54,19 @@ export const constantRoutes = [
     ],
   },
   {
+    path: '/oneMenu',
+    component: Layout,
+    //单个children的路由menuGroup:true标记为多层级主菜单
+    meta: { title: 'OneMenu', icon: 'Polygon', menuGroup: true },
+    children: [
+      {
+        path: '/oneMenu/list',
+        component: RouteParentView,
+        meta: { title: 'OneMenu List', icon: 'Polygon' },
+      },
+    ],
+  },
+  {
     path: '/table',
     component: Layout,
     children: [

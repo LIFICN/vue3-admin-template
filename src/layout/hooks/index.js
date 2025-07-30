@@ -17,7 +17,7 @@ export function useCovertRoutesToMenus(routeStoreData = []) {
   watch(
     () => routeStoreData,
     (newVal) => (routeArr.value = forEachRoutes(newVal || [], '')),
-    { deep: true, immediate: true }
+    { deep: true, immediate: true },
   )
 
   function forEachRoutes(routes = [], basePath = '') {
@@ -28,10 +28,13 @@ export function useCovertRoutesToMenus(routeStoreData = []) {
       if (el.hidden) return
       let obj = {}
       let flag = basePath && el.path && !basePath.endsWith('/') && !el.path.startsWith('/')
-      obj.key = flag ? basePath + '/' + el.path : basePath + el.path
+      obj.key = flag ? `${basePath}/${el.path}` : el.path
       obj.icon = getIcon(el)
       obj.label = getLabel(el)
-      if (el.children && el.children.length > 1) obj.children = forEachRoutes(el.children, obj.key)
+      if (Array.isArray(el.children) && (el.children.length > 1 || el.meta?.menuGroup)) {
+        obj.children = forEachRoutes(el.children, obj.key)
+      }
+
       res.push(obj)
     })
 
