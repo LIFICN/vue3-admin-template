@@ -89,6 +89,9 @@ const menuItemClick = (menuItem) => {
   height: 100%;
   position: relative;
 
+  --app-content-bg-color: #fafbfc;
+  --app-bar-height: 45px;
+
   .sidebarmenu-wrap {
     position: absolute;
     top: 0;
@@ -105,7 +108,7 @@ const menuItemClick = (menuItem) => {
       height: 24px;
       border-radius: 50%;
       position: absolute;
-      top: 14px;
+      top: 12px;
       right: -12px;
       z-index: 99;
       background-color: #ffffff;

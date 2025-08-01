@@ -2,7 +2,9 @@
   <div class="app-main">
     <router-view v-slot="{ Component }">
       <Transition name="app-fade-transform" mode="out-in">
-        <component :is="Component" :key="$route.fullPath" />
+        <div class="transform-wrapper" :key="$route.fullPath" v-if="Component">
+          <component :is="Component" />
+        </div>
       </Transition>
     </router-view>
   </div>
@@ -10,11 +12,11 @@
 
 <style lang="scss" scoped>
 .app-main {
-  padding: 13px 13px 0 13px;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
+  background-color: var(--app-content-bg-color);
 
   &::-webkit-scrollbar {
     width: 8px; /* 宽度 */
@@ -43,7 +45,9 @@
   .app-fade-transform-leave-active,
   .app-fade-transform-enter-active {
     will-change: transform, opacity;
-    transition: transform 0.2s, opacity 0.2s;
+    transition:
+      transform 0.2s,
+      opacity 0.2s;
   }
 
   .app-fade-transform-enter-from {
@@ -54,6 +58,15 @@
   .app-fade-transform-leave-to {
     opacity: 0;
     transform: translateX(30px);
+  }
+
+  .transform-wrapper {
+    box-sizing: border-box;
+    margin: 10px;
+    padding: 16px;
+    border-radius: 6px;
+    background-color: #fff;
+    border: 1px solid rgba(219, 223, 233, 0.6);
   }
 }
 </style>

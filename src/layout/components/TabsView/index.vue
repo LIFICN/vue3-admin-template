@@ -9,7 +9,7 @@
     >
       <span class="title">{{ item.title }}</span>
       <i class="close-icon" @click.stop="tabRemove(index)" v-if="!item.affix">
-        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M567.168 512l189.184 188.352a40.064 40.064 0 0 1 0.768 55.68 37.76 37.76 0 0 1-54.4 0.832L512 566.912l-190.72 189.952a37.76 37.76 0 0 1-54.4-0.768 40.064 40.064 0 0 1 0.768-55.68L456.832 512 267.648 323.648a40.064 40.064 0 0 1-0.768-55.68 37.76 37.76 0 0 1 54.4-0.832L512 457.088l190.72-189.952a37.76 37.76 0 0 1 54.4 0.768 40.064 40.064 0 0 1-0.768 55.68L567.168 512z"
             fill="#666"
@@ -119,39 +119,38 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
 
 <style lang="scss" scoped>
 .tab-scrollbar {
-  padding: 0 18px;
-  height: 50px;
+  padding: 0 10px;
+  height: var(--app-bar-height);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
-  border-bottom: 1px solid rgba(5, 5, 5, 0.06);
-  //box-shadow: 0 1px 4px rgb(0, 21, 41, 0.06);
+  background-color: var(--app-content-bg-color);
 
   .tab-item {
-    border: 1px solid #dcdfe6;
-    border-radius: 3px;
-    height: 26px;
+    border-radius: 6px;
+    height: 28px;
     cursor: pointer;
-    color: #303133;
-    margin-right: 8px;
+    color: #666;
+    margin-right: 6px;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    padding: 0 7px;
+    padding: 0 6px;
     justify-content: space-between;
     user-select: none;
+    background-color: #ffffff;
+    border: 1px solid rgba(219, 223, 233, 0.6);
 
     .title {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px;
     }
 
     .close-icon {
-      margin-left: 6px;
-      width: 16px;
-      height: 16px;
+      margin-left: 5px;
+      width: 13px;
+      height: 13px;
       overflow: hidden;
       display: inline-flex;
       align-items: center;
@@ -166,23 +165,11 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
 
   .active {
     color: #1677ff;
-    background: #e8f4ff;
-    border: 1px solid #1677ff;
-
-    .close-icon {
-      color: #1677ff;
-    }
-
-    svg {
-      path {
-        fill: #1677ff;
-      }
-    }
   }
 
   &::-webkit-scrollbar {
-    width: 8px; /* 宽度 */
-    height: 8px; /* 高度 */
+    width: 6px; /* 宽度 */
+    height: 6px; /* 高度 */
   }
 
   &::-webkit-scrollbar-track {

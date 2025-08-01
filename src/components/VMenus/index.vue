@@ -62,7 +62,7 @@ watch(
   --menuBg: #fff;
   --menuText: #333;
   --menuHoverBg: rgba(0, 0, 0, 0.06);
-  --menuHoverText: inherit;
+  --menuHoverText: #333;
   --menuArrowColor: #999;
   --menuActiveArrowColor: #1677ff;
   --menuActiveBg: #e6f4ff;

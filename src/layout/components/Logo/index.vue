@@ -24,7 +24,7 @@ const logo = ref('https://unpkg.byted-static.com/latest/byted/arco-config/assets
 
 <style lang="scss" scoped>
 $sidebarBg: transparent;
-$sidebarText: #333;
+$sidebarText: #666;
 
 .sidebarLogoTitleFade-enter-active {
   transition: opacity 1s;
@@ -40,10 +40,11 @@ $sidebarText: #333;
   display: flex;
   align-items: center;
   text-decoration: none;
-  height: 50px;
+  height: var(--app-bar-height);
   background-color: $sidebarBg;
   overflow: hidden;
   will-change: opacity;
+  outline: none;
 
   .sidebar-logo {
     width: 32px;

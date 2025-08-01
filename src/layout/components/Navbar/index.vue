@@ -22,8 +22,8 @@ function logout() {
 </script>
 
 <style lang="scss" scoped>
-$appHeaderHeight: 50px;
-$appHeaderBg: #ffffff;
+$appHeaderHeight: var(--app-bar-height);
+$appHeaderBg: var(--app-content-bg-color);
 
 .nav-bar {
   height: $appHeaderHeight;
@@ -33,7 +33,6 @@ $appHeaderBg: #ffffff;
   justify-content: flex-end;
   align-items: center;
   color: #333;
-  border: 1px solid #f6f6f6;
 
   .right-slot {
     margin-right: 20px;
