@@ -1,5 +1,9 @@
 <template>
   <div class="nav-bar">
+    <div class="left-slot">
+      <slot name="leftSlot" />
+    </div>
+
     <div class="right-slot">
       <span class="username">用户名：{{ store.usernameGetter }}</span>
       <span class="sign-out" @click="logout">注 销</span>
@@ -30,12 +34,14 @@ $appHeaderBg: var(--app-content-bg-color);
   width: 100%;
   background-color: $appHeaderBg;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   color: #333;
+  padding: 0 10px;
+  overflow: hidden;
+  box-sizing: border-box;
 
   .right-slot {
-    margin-right: 20px;
     font-size: 16px;
     display: flex;
     align-items: center;

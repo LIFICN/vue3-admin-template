@@ -3,14 +3,6 @@
     <div class="sidebarmenu-wrap" :style="{ width: sidebarWidth }">
       <Logo :collapse="collapse" />
 
-      <i class="collapse-btn" @click.stop="setCollapse" :style="{ transform: collapse ? 'rotateY(180deg)' : '' }">
-        <svg viewBox="0 0 1024 1024" aria-hidden="true">
-          <path
-            d="M707.323 960.556l56.093-54.503-403.917-392.469 403.917-392.475-56.093-54.502L247.32 513.584l460.004 446.972z m0 0z"
-          ></path>
-        </svg>
-      </i>
-
       <div class="sidebarmenu-wrap-content">
         <VMenus :collapse="collapse" :active-key="activeKey" :list="menusList" @menu-item-click="menuItemClick">
           <template v-slot:icon="{ item, active }">
@@ -32,7 +24,30 @@
     </div>
 
     <div class="main-container" :style="{ left: sidebarWidth, width: `calc(100% - ${sidebarWidth})` }">
-      <Navbar />
+      <Navbar>
+        <template #leftSlot>
+          <i class="collapse-btn" @click.stop="setCollapse">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" p-id="33984">
+              <path
+                d="M163.108571 171.885714h697.782858A53.394286 53.394286 0 0 1 914.285714 225.28a53.76 53.76 0 0 1-53.76 54.125714H163.474286A53.76 53.76 0 0 1 109.714286 225.28 53.394286 53.394286 0 0 1 163.108571 171.885714z"
+                fill="currentColor"
+                p-id="33985"
+              ></path>
+              <path
+                d="M163.474286 458.24h697.051428A53.76 53.76 0 0 1 914.285714 512a53.76 53.76 0 0 1-53.394285 53.394286H163.108571A53.76 53.76 0 0 1 109.714286 512a53.76 53.76 0 0 1 53.76-54.125714z"
+                fill="currentColor"
+                p-id="33986"
+              ></path>
+              <path
+                d="M163.474286 744.594286h294.765714A53.76 53.76 0 0 1 512 798.72a53.394286 53.394286 0 0 1-53.394286 53.394286H163.108571A53.394286 53.394286 0 0 1 109.714286 798.72a53.76 53.76 0 0 1 53.76-54.125714z"
+                fill="currentColor"
+                p-id="33987"
+              ></path>
+            </svg>
+          </i>
+        </template>
+      </Navbar>
+
       <TabsView />
       <AppMain />
     </div>
@@ -103,34 +118,6 @@ const menuItemClick = (menuItem) => {
     border-right: 1px solid rgba(5, 5, 5, 0.06);
     padding: 0 4px;
 
-    .collapse-btn {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      position: absolute;
-      top: 12px;
-      right: -12px;
-      z-index: 99;
-      background-color: #ffffff;
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.23);
-      cursor: pointer;
-      will-change: transform;
-      transition: transform 0.3s;
-
-      svg {
-        width: 10px;
-        height: 10px;
-
-        path {
-          fill: rgba(0, 0, 0, 0.6);
-        }
-      }
-    }
-
     &-content {
       overflow-y: auto;
       height: calc(100% - 50px);
@@ -147,6 +134,22 @@ const menuItemClick = (menuItem) => {
     will-change: left;
     transition: left 0.26s ease-in-out;
     height: 100%;
+
+    .collapse-btn {
+      width: 18px;
+      height: 18px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      svg {
+        width: 100%;
+        height: 100%;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
   }
 }
 </style>
