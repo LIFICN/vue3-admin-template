@@ -12,7 +12,7 @@
         <svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M567.168 512l189.184 188.352a40.064 40.064 0 0 1 0.768 55.68 37.76 37.76 0 0 1-54.4 0.832L512 566.912l-190.72 189.952a37.76 37.76 0 0 1-54.4-0.768 40.064 40.064 0 0 1 0.768-55.68L456.832 512 267.648 323.648a40.064 40.064 0 0 1-0.768-55.68 37.76 37.76 0 0 1 54.4-0.832L512 457.088l190.72-189.952a37.76 37.76 0 0 1 54.4 0.768 40.064 40.064 0 0 1-0.768 55.68L567.168 512z"
-            fill="#666"
+            fill="currentColor"
           ></path>
         </svg>
       </i>
@@ -119,7 +119,7 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
 
 <style lang="scss" scoped>
 .tab-scrollbar {
-  padding: 0 10px;
+  padding: 0 var(--app-content-gap);
   height: var(--app-bar-height);
   box-sizing: border-box;
   display: flex;
@@ -128,33 +128,36 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
   overflow-y: hidden;
   background-color: var(--app-content-bg-color);
 
+  --tab-item-active-color: #1677ff;
+
   .tab-item {
     border-radius: 6px;
-    height: 28px;
+    height: 32px;
     cursor: pointer;
-    color: #666;
+    color: var(--app-content-text-color);
     margin-right: 6px;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    padding: 0 6px;
+    padding: 0 10px;
     justify-content: space-between;
     user-select: none;
     background-color: #ffffff;
-    border: 1px solid rgba(219, 223, 233, 0.6);
+    border: 1px solid var(--app-content-border-color);
 
     .title {
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .close-icon {
-      margin-left: 5px;
+      margin-left: 8px;
       width: 13px;
       height: 13px;
       overflow: hidden;
       display: inline-flex;
       align-items: center;
       flex-shrink: 0;
+      color: var(--app-content-text-color);
 
       svg {
         width: 100%;
@@ -164,7 +167,11 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
   }
 
   .active {
-    color: #1677ff;
+    color: var(--tab-item-active-color);
+
+    .close-icon {
+      color: var(--tab-item-active-color);
+    }
   }
 
   &::-webkit-scrollbar {

@@ -47,8 +47,8 @@ $sidebarText: #666;
   outline: none;
 
   .sidebar-logo {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     margin: 0 10px;
   }
 

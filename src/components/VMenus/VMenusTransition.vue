@@ -91,7 +91,10 @@ function leave(el) {
 .v-collapse-transition-leave-active,
 .v-collapse-transition-enter-active {
   will-change: max-height, padding-top, padding-bottom;
-  transition: 0.26s max-height ease-in-out, 0.26s padding-top ease-in-out, 0.26s padding-bottom ease-in-out;
+  transition:
+    0.26s max-height ease-in-out,
+    0.26s padding-top ease-in-out,
+    0.26s padding-bottom ease-in-out;
 }
 
 .v-floating-transition-enter-active,
@@ -99,7 +102,9 @@ function leave(el) {
   will-change: transform, opacity;
   opacity: 1;
   transform: scale(1, 1);
-  transition: 0.3s transform, 0.3s opacity;
+  transition:
+    0.3s transform,
+    0.3s opacity;
   transform-origin: top left;
 }
 

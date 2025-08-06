@@ -7,10 +7,15 @@
         <VMenus :collapse="collapse" :active-key="activeKey" :list="menusList" @menu-item-click="menuItemClick">
           <template v-slot:icon="{ item, active }">
             <i
-              :style="{ color: active ? '#1677ff' : 'inherit', width: '16px', height: '16px' }"
+              :style="{ color: active ? '#1677ff' : 'inherit', width: '16px', height: '16px', lineHeight: '16px' }"
               v-if="item.icon == 'Polygon'"
             >
-              <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" p-id="1473">
+              <svg
+                viewBox="0 0 1024 1024"
+                xmlns="http://www.w3.org/2000/svg"
+                p-id="1473"
+                style="height: 100%; width: 100%"
+              >
                 <path
                   d="M680.71 915.22H343.29c-39.53 0-76.37-21.27-96.12-55.52L78.46 567.49c-19.75-34.22-19.75-76.77 0-110.99l168.71-292.2c19.75-34.24 56.6-55.52 96.12-55.52h337.42c39.53 0 76.37 21.27 96.12 55.52l168.71 292.2c19.75 34.22 19.75 76.77 0 110.99L776.83 859.7c-19.75 34.24-56.59 55.52-96.12 55.52zM343.29 175.69c-15.7 0-30.35 8.43-38.21 22.04l-168.71 292.2c-7.84 13.61-7.84 30.52 0 44.13l168.71 292.2c7.86 13.61 22.51 22.04 38.21 22.04h337.42c15.7 0 30.35-8.43 38.21-22.04l168.71-292.2c7.84-13.61 7.84-30.52 0-44.13l-168.71-292.2c-7.86-13.61-22.51-22.04-38.21-22.04H343.29z"
                   fill="currentColor"
@@ -105,7 +110,10 @@ const menuItemClick = (menuItem) => {
   position: relative;
 
   --app-content-bg-color: #fafbfc;
-  --app-bar-height: 45px;
+  --app-bar-height: 50px;
+  --app-content-text-color: #78829d;
+  --app-content-gap: 15px;
+  --app-content-border-color: rgba(219, 223, 233, 0.6);
 
   .sidebarmenu-wrap {
     position: absolute;
@@ -115,12 +123,12 @@ const menuItemClick = (menuItem) => {
     box-sizing: border-box;
     will-change: width;
     transition: width 0.26s ease-in-out;
-    border-right: 1px solid rgba(5, 5, 5, 0.06);
-    padding: 0 4px;
+    border-right: 1px solid var(--app-content-border-color);
+    padding: 0 8px;
 
     &-content {
       overflow-y: auto;
-      height: calc(100% - 50px);
+      height: calc(100% - var(--app-bar-height));
     }
   }
 
@@ -147,7 +155,7 @@ const menuItemClick = (menuItem) => {
       svg {
         width: 100%;
         height: 100%;
-        color: rgba(0, 0, 0, 0.6);
+        color: var(--app-content-text-color);
       }
     }
   }

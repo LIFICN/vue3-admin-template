@@ -62,11 +62,11 @@
 
   .transform-wrapper {
     box-sizing: border-box;
-    margin: 10px;
-    padding: 16px;
+    margin: 10px var(--app-content-gap);
+    padding: 15px;
     border-radius: 6px;
     background-color: #fff;
-    border: 1px solid rgba(219, 223, 233, 0.6);
+    border: 1px solid var(--app-content-border-color);
   }
 }
 </style>

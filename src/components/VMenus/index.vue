@@ -53,7 +53,7 @@ function setActiveKey(val) {
 watch(
   () => props.activeKey,
   (newVal) => setActiveKey(newVal),
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 

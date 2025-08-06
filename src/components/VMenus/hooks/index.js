@@ -18,7 +18,7 @@ export function useTreeToParentMap(treeList) {
       treeParentMap.value = forEachTreeToMap(treeList)
       console.log('treeParentMap', treeParentMap)
     },
-    { deep: true, immediate: true }
+    { deep: true, immediate: true },
   )
 
   function forEachTreeToMap(arr, parentKey = '', parentMap = {}) {

@@ -36,8 +36,8 @@ $appHeaderBg: var(--app-content-bg-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #333;
-  padding: 0 10px;
+  color: var(--app-content-text-color);
+  padding: 0 var(--app-content-gap);
   overflow: hidden;
   box-sizing: border-box;
 
