@@ -67,6 +67,7 @@
     border-radius: 6px;
     background-color: #fff;
     border: 1px solid var(--app-content-border-color);
+    overflow-x: auto;
   }
 }
 </style>

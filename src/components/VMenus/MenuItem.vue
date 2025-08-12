@@ -146,7 +146,7 @@ watch(
   justify-content: center;
   flex-shrink: 0;
   will-change: transform;
-  transition: transform 0.35s ease-in-out;
+  transition: transform 0.3s ease-in-out;
 
   svg {
     width: 100%;

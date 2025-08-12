@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" :style="{ paddingLeft: sidebarWidth }">
     <div class="sidebarmenu-wrap" :style="{ width: sidebarWidth }">
       <Logo :collapse="collapse" />
 
@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <div class="main-container" :style="{ left: sidebarWidth, width: `calc(100% - ${sidebarWidth})` }">
+    <div class="main-container">
       <Navbar>
         <template #leftSlot>
           <i class="collapse-btn" @click.stop="setCollapse">
@@ -105,9 +105,12 @@ const menuItemClick = (menuItem) => {
 <style lang="scss" scoped>
 .app-container {
   overflow: hidden;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   position: relative;
+  will-change: padding-left;
+  transition: padding-left 0.26s ease-in-out;
+  contain: layout paint;
 
   --app-content-bg-color: #fafbfc;
   --app-bar-height: 50px;
@@ -124,24 +127,23 @@ const menuItemClick = (menuItem) => {
     will-change: width;
     transition: width 0.26s ease-in-out;
     border-right: 1px solid var(--app-content-border-color);
-    padding: 0 8px;
+    contain: layout paint;
 
     &-content {
       overflow-y: auto;
+      padding: 10px;
       height: calc(100% - var(--app-bar-height));
     }
   }
 
   .main-container {
-    position: absolute;
-    top: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-sizing: border-box;
-    will-change: left;
-    transition: left 0.26s ease-in-out;
     height: 100%;
+    width: 100%;
+    contain: layout paint;
 
     .collapse-btn {
       width: 18px;

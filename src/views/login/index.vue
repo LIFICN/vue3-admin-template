@@ -64,8 +64,8 @@ $bg: #f4f4f4;
 $loginColor: #1677ff;
 
 .login-container {
-  min-height: 100%;
-  width: 100%;
+  min-height: 100vh;
+  width: 100vw;
   background-color: $bg;
   overflow: hidden;
   display: flex;
