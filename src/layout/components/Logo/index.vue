@@ -2,9 +2,9 @@
   <router-link :class="['sidebar-logo-wrap', { 'sidebar-logo-wrap-collapse': collapse }]" to="/">
     <img v-if="logo" :src="logo" class="sidebar-logo" />
 
-    <transition name="sidebarLogoTitleFade">
+    <Transition name="sidebarLogoTitleFade">
       <h1 v-if="!collapse" class="sidebar-logo-title">{{ title }}</h1>
-    </transition>
+    </Transition>
   </router-link>
 </template>
 

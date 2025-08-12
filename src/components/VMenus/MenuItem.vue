@@ -8,6 +8,7 @@
     ]"
     :style="{ 'padding-left': paddingLeftStyle, 'justify-content': collapse ? 'center' : '' }"
     @click.stop="menuClick"
+    ref="vMenuItemRef"
   >
     <span class="v-menu-item-icon-wrap" v-if="slots.icon">
       <slots.icon :item="item" :active="mergeActive" />
@@ -30,7 +31,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, nextTick, shallowRef, watch } from 'vue'
 import { useInjectMeuns } from './hooks'
 
 const emits = defineEmits(['update:expand'])
@@ -51,6 +52,7 @@ const props = defineProps({
   },
 })
 
+const vMenuItemRef = shallowRef(null)
 const { collapse, activeKey, menuItemClick, treeParentMap, slots } = useInjectMeuns()
 
 const isSubmenuItem = computed(() => props.type == 'submenuItem')
@@ -103,6 +105,19 @@ watch(
   },
   { immediate: true },
 )
+
+watch(
+  () => props.item.label,
+  () => {
+    nextTick(() => {
+      if (vMenuItemRef.value) {
+        //解决宽度动画影响的文本动态高度换行问题
+        vMenuItemRef.value.style.maxHeight = `${vMenuItemRef.value.offsetHeight}px`
+      }
+    })
+  },
+  { immediate: true },
+)
 </script>
 
 <style lang="scss" scoped>
@@ -110,7 +125,7 @@ watch(
   display: flex;
   align-items: center;
   color: var(--menuText);
-  height: 40px;
+  min-height: 40px;
   box-sizing: border-box;
   padding: 0 16px;
   border-radius: 8px;
@@ -118,6 +133,7 @@ watch(
   cursor: pointer;
   transition: background-color 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
   position: relative;
+  overflow: hidden;
 
   &:hover {
     background-color: var(--menuHoverBg);
@@ -135,6 +151,8 @@ watch(
     flex: 1;
     margin-left: 6px;
     font-size: 14px;
+    white-space: normal;
+    // word-break: break-all; //会影响换行高度, 动画执行异常
   }
 }
 

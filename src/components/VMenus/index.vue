@@ -74,7 +74,7 @@ watch(
 .v-menus {
   background-color: var(--menuBg);
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   box-sizing: border-box;
   white-space: nowrap;
 }

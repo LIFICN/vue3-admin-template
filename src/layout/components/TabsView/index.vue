@@ -132,14 +132,14 @@ watch(() => ({ ...currentRoute.value }), watchCurrentRoute, { deep: true, immedi
 
   .tab-item {
     border-radius: 6px;
-    height: 32px;
+    height: 30px;
     cursor: pointer;
     color: var(--app-content-text-color);
     margin-right: 6px;
     white-space: nowrap;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     justify-content: space-between;
     user-select: none;
     background-color: #ffffff;
