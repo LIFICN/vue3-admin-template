@@ -1,23 +1,31 @@
 import { defineAsyncComponent } from 'vue'
 
 export function globComponents(app) {
-    const modulesRoot = import.meta.glob('/src/components/*.vue')
-    const modulesSon = import.meta.glob('/src/components/**/index.vue')
+  const components = []
+  const modulesObjArr = [
+    import.meta.glob('/src/components/*.vue'),
+    import.meta.glob('/src/components/*.jsx'),
+    import.meta.glob('/src/components/**/index.vue'),
+    import.meta.glob('/src/components/**/index.jsx'),
+  ]
 
-    const components = []
+  modulesObjArr.forEach((module) => {
+    Object.keys(module).forEach((path) => {
+      let name = ''
 
-    for (const path in modulesRoot) {
-        const index = path.lastIndexOf('/')
-        const name = path.slice(index + 1).replace('.vue', '')
-        components.push({ key: name, value: defineAsyncComponent(modulesRoot[path]) })
-    }
+      if (path.includes('/index')) {
+        const replacePath = path.replace('/index.vue', '').replace('/index.jsx', '')
+        name = replacePath.slice(replacePath.lastIndexOf('/') + 1)
+      } else {
+        name = path
+          .slice(path.lastIndexOf('/') + 1)
+          .replace('.vue', '')
+          .replace('.jsx', '')
+      }
 
-    for (const path in modulesSon) {
-        const replacePath = path.replace('/index.vue', '')
-        const index = replacePath.lastIndexOf('/')
-        const name = replacePath.slice(index + 1)
-        components.push({ key: name, value: defineAsyncComponent(modulesSon[path]) })
-    }
+      name && components.push({ key: name, value: defineAsyncComponent(module[path]) })
+    })
+  })
 
-    components.forEach(el => app.component(el.key, el.value))
+  components.forEach((el) => app.component(el.key, el.value))
 }

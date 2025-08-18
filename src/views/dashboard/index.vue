@@ -1,12 +1,7 @@
 <template>
-  <div>
-    <span>dashboard page</span>
-  </div>
+  <div>dashboard page</div>
 </template>
 
-<script>
-export default {}
-</script>
+<script setup></script>
 
-<style>
-</style>
+<style></style>
