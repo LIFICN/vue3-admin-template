@@ -1,19 +1,30 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-const path = require('path')
+import vueJsx from '@vitejs/plugin-vue-jsx'
+import { fileURLToPath, URL } from 'node:url'
 
-// https://vitejs.dev/config/
+// https://cn.vitejs.dev/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), vueJsx()],
   server: {
-    open: true,  //是否打开浏览器
-    port: 3000,  //端口号
-    cors: true   //跨域
+    open: false, //是否打开浏览器
+    port: 3000, //端口号
+    cors: true, //跨域
+    host: '0.0.0.0', //ip地址
   },
-  base: './',  //根路径
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, "./src") // 转换 '@' to './src' 
-    }
-  }
+      '@': fileURLToPath(new URL('./src', import.meta.url)), // 转换 '@' to 'src'
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 2 * 1024 * 1024,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'floating-ui': ['@floating-ui/dom'],
+        },
+      },
+    },
+  },
 })
