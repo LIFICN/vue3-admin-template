@@ -57,21 +57,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     (newVal, oldVal) => {
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
-
-      if (!sourceList.value?.length) {
-        itemSizeMap.clear()
-        keyIndexObj = {}
-        startIndex = 0
-        bufferStartIndex = -1
-        nextTick(() => {
-          if (!phantomDivEl || !contentContainerEl) return
-          phantomDivEl.style.height = `0px`
-          contentContainerEl.style.transform = `translateY(0px)`
-        })
-
-        updateData()
-        return
-      }
+      if (!sourceList.value?.length) return clearAll(false)
 
       keyIndexObj = {}
       sourceList.value?.forEach((el, index) => {
@@ -92,7 +78,10 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     { immediate: true },
   )
 
-  onMounted(() => {
+  //获取当前已渲染的item dom
+  const getCurrentRenderedItem = () => Array.from(contentContainerEl?.querySelectorAll(itemContainer) || [])
+
+  const initVirtualList = () => {
     scrollContainerEl = isRef(scrollContainer) ? scrollContainer.value : document.querySelector(scrollContainer)
     contentContainerEl = isRef(contentContainer) ? contentContainer.value : document.querySelector(contentContainer)
     if (!scrollContainerEl || !contentContainerEl) return
@@ -103,17 +92,27 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     scrollContainerEl.appendChild(phantomDivEl)
     scrollContainerEl.style.position = 'relative'
     contentContainerEl.style.cssText += 'position:absolute;top:0;left:0;width:100%;'
-  })
+  }
 
-  onBeforeUnmount(() => {
+  const clearAll = (clearWatch = true) => {
     itemSizeMap.clear()
-    keyIndexObj = null
-    resizeObserver?.disconnect()
-    scrollContainerEl?.removeEventListener('scroll', handleScroll)
-  })
+    keyIndexObj = {}
+    startIndex = 0
+    bufferStartIndex = -1
+    sourceList.value = []
+    clearWatch && resizeObserver?.disconnect()
+    clearWatch && scrollContainerEl?.removeEventListener('scroll', handleScroll)
+    updateData()
 
-  //获取当前已渲染的item dom
-  const getCurrentRenderedItem = () => Array.from(contentContainerEl?.querySelectorAll(itemContainer) || [])
+    nextTick(() => {
+      if (!phantomDivEl || !contentContainerEl) return
+      phantomDivEl.style.height = `0px`
+      contentContainerEl.style.transform = `translateY(0px)`
+    })
+  }
+
+  onMounted(initVirtualList)
+  onBeforeUnmount(() => clearAll())
 
   const handleScroll = debounceRAF(async function (e) {
     const scrollTop = e.target.scrollTop
