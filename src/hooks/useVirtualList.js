@@ -1,4 +1,4 @@
-import { nextTick, onBeforeUnmount, onMounted, ref, watch, isRef } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch, isRef } from 'vue'
 
 function debounceRAF(func) {
   let id = null
@@ -34,6 +34,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
 
   const sourceList = ref([])
   const sliceData = ref([])
+  const needUpdate = ref(false)
   let scrollContainerEl, contentContainerEl, phantomDivEl
   let startIndex = 0 //实际滚动定位起始索引
   let bufferStartIndex = -1 //起始缓存索引
@@ -48,17 +49,21 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
   const callback = debounce(function (e) {
     updateItemSize(e.map((el) => el.target))
-  }, 70)
+  }, 60)
 
   const resizeObserver = new ResizeObserver(callback)
 
   watch(
-    () => dataSourceRef?.value?.slice(),
-    (newVal, oldVal) => {
+    () => [dataSourceRef?.value?.slice(), needUpdate.value],
+    (newVals, oldVals) => {
+      const [newVal] = newVals
+      const [oldVal] = oldVals || []
+
+      if (!needUpdate.value) return
       if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
-      if (!sourceList.value?.length) return clearAll(false)
 
+      if (!sourceList.value?.length) return disposeAll(false)
       keyIndexObj = {}
       sourceList.value?.forEach((el, index) => {
         keyIndexObj[el[keyField]] = index
@@ -81,7 +86,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   //获取当前已渲染的item dom
   const getCurrentRenderedItem = () => Array.from(contentContainerEl?.querySelectorAll(itemContainer) || [])
 
-  const initVirtualList = () => {
+  const initVirtualList = async () => {
+    await disposeAll() //销毁上一次的
     scrollContainerEl = isRef(scrollContainer) ? scrollContainer.value : document.querySelector(scrollContainer)
     contentContainerEl = isRef(contentContainer) ? contentContainer.value : document.querySelector(contentContainer)
     if (!scrollContainerEl || !contentContainerEl) return
@@ -92,35 +98,30 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     scrollContainerEl.appendChild(phantomDivEl)
     scrollContainerEl.style.position = 'relative'
     contentContainerEl.style.cssText += 'position:absolute;top:0;left:0;width:100%;'
+    needUpdate.value = true
   }
 
-  const clearAll = (clearWatch = true) => {
+  const disposeAll = async (clearWatch = true) => {
+    sourceList.value = []
     itemSizeMap.clear()
     keyIndexObj = {}
     startIndex = 0
     bufferStartIndex = -1
-    sourceList.value = []
+    updateData()
     clearWatch && resizeObserver?.disconnect()
     clearWatch && scrollContainerEl?.removeEventListener('scroll', handleScroll)
-    updateData()
-
-    nextTick(() => {
-      if (!phantomDivEl || !contentContainerEl) return
-      phantomDivEl.style.height = `0px`
-      contentContainerEl.style.transform = `translateY(0px)`
-    })
+    needUpdate.value = !clearWatch //只是数据清空,可以触发watch重新计算
+    await nextTick()
+    clearWatch && phantomDivEl?.remove()
+    if (!clearWatch && phantomDivEl) phantomDivEl.style.height = `0px`
+    if (contentContainerEl) contentContainerEl.style.transform = `translateY(0px)`
   }
 
-  onMounted(initVirtualList)
-  onBeforeUnmount(() => clearAll())
+  onBeforeUnmount(disposeAll)
 
   const handleScroll = debounceRAF(async function (e) {
     const scrollTop = e.target.scrollTop
-    //如果scrolltop在当前item高度内滚动，则跳过计算
     const startTopKey = getItemKey(startIndex)
-    const preStartTop = getItemTop(startTopKey) || 0
-    if (scrollTop > preStartTop && scrollTop <= preStartTop + getItemHeight(startTopKey)) return
-
     //根据已渲染的item key，二分查找匹配符合scrolltop的key，计算出符合的index
     const topKey = binarySearch(scrollTop)
     if (!topKey || startTopKey == topKey) return
@@ -160,6 +161,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
 
     if (!changeFlag) return
     updateItemOffset(isCalcAll)
+    //更新时间不固定，会导致高度，滚动错位，需要再次计算
+    transformToStart()
     updateHeight()
   }
 
@@ -187,10 +190,6 @@ export default function useVirtualList(dataSourceRef, config = {}) {
       const offsetHeight = getItemHeight(itemKey)
       bufferStartTop += offsetHeight
     }
-
-    //更新时间不固定，会导致高度，滚动错位，需要再次计算
-    transformToStart()
-    updateHeight()
   }
 
   // 二分查找算法，配合检索虚拟列表scrolltop魔改，非原版通用
@@ -200,8 +199,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     while (left <= right) {
       const mid = Math.floor((left + right) / 2)
       const midTop = getItemTop(getItemKey(mid))
-      const val = midTop - scrollTop
-      if (val >= 0 && val <= getItemHeight(getItemKey(mid))) return getItemKey(mid)
+      if (scrollTop >= midTop && scrollTop <= midTop + getItemHeight(getItemKey(mid))) return getItemKey(mid)
       else if (midTop < scrollTop) left = mid + 1
       else right = mid - 1
     }
@@ -214,5 +212,5 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     requestAnimationFrame(() => (scrollContainerEl.scrollTop = getItemTop(itemKey)))
   }
 
-  return { sliceData, scrollTo }
+  return { initVirtualList, sliceData, scrollTo }
 }

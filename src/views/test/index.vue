@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import useVirtualList from '@/hooks/useVirtualList.js'
 
 const dataSource = ref(
@@ -35,7 +35,7 @@ const dataSource = ref(
     })),
 )
 
-const { sliceData, scrollTo } = useVirtualList(dataSource, {
+const { initVirtualList, sliceData, scrollTo } = useVirtualList(dataSource, {
   scrollContainer: '.test-scroll',
   contentContainer: '.test-content',
   itemContainer: '.test-content-item',
@@ -44,6 +44,8 @@ const { sliceData, scrollTo } = useVirtualList(dataSource, {
   keyField: 'key',
   itemHeight: 50,
 })
+
+onMounted(initVirtualList)
 
 function generateRandomText() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
