@@ -25,6 +25,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     bufferSize = 10,
     keyField = '',
     itemHeight = 30,
+    debounceCalcTime = 60,
   } = config || {}
 
   if (!isRef(dataSourceRef) || !scrollContainer || !contentContainer || !itemContainer || !keyField)
@@ -49,7 +50,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
   const callback = debounce(function (e) {
     updateItemSize(e.map((el) => el.target))
-  }, 60)
+  }, debounceCalcTime || 60)
 
   const resizeObserver = new ResizeObserver(callback)
 
@@ -60,7 +61,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
       const [oldVal] = oldVals || []
 
       if (!needUpdate.value) return
-      if (newVal.some((el) => !el[keyField])) throw new Error('no keyField on items')
+      if (newVal?.some((el) => !el[keyField])) throw new Error('no keyField on items')
       sourceList.value = newVal || []
 
       if (!sourceList.value?.length) return disposeAll(false)
@@ -166,11 +167,11 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     updateHeight()
   }
 
-  const updateHeight = () => {
+  const updateHeight = debounceRAF(() => {
     const endKey = getItemKey(sourceList.value.length - 1)
     const height = getItemTop(endKey) + getItemHeight(endKey)
     if (endKey && Math.abs(phantomDivEl.clientHeight) != height) phantomDivEl.style.height = `${height}px`
-  }
+  })
 
   function transformToStart() {
     //动态定位到start位置,由于添加了缓冲区所以滚动的top取值应该是缓冲区第一项(bufferStartIndex)的top值
