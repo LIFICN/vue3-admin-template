@@ -8,14 +8,6 @@ function debounceRAF(func) {
   }
 }
 
-function debounce(func, wait = 100) {
-  let timer = null
-  return function () {
-    timer && clearTimeout(timer)
-    timer = setTimeout(() => func?.apply(this, arguments), wait)
-  }
-}
-
 export default function useVirtualList(dataSourceRef, config = {}) {
   const {
     scrollContainer,
@@ -25,7 +17,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     bufferSize = 10,
     keyField = '',
     itemHeight = 30,
-    debounceCalcTime = 60,
+    chunkSize = 1000,
   } = config || {}
 
   if (!isRef(dataSourceRef) || !scrollContainer || !contentContainer || !itemContainer || !keyField)
@@ -40,17 +32,26 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   let startIndex = 0 //实际滚动定位起始索引
   let bufferStartIndex = -1 //起始缓存索引
   let keyIndexObj = {} //key-index对照
-
+  let chunkList = [] //缓存数据
+  const chunkChangedIndexList = new Set() //缓存数据变更索引
   const itemSizeMap = new Map()
+
   const getItemHeight = (key) => itemSizeMap.get(key)?.height || itemHeight || 0
-  const getItemTop = (key) => itemSizeMap.get(key)?.top || 0
+  const getChunkIndex = (index) => Math.floor(index / chunkSize)
+  const getItemTop = (key) => {
+    const i = keyIndexObj[key]
+    const chunk = chunkList[getChunkIndex(i)]
+    let top = chunk?.top || 0
+    if (chunk) top += chunk.prefixSums[Math.max(i - chunk.start, 0)] || 0
+    return top
+  }
+
   const setItemSize = (key, obj = {}) => itemSizeMap.set(key, { ...itemSizeMap.get(key), ...obj })
   const getItemKey = (index) => (sourceList.value[index] && sourceList.value[index][keyField]) || ''
 
-  //容器尺寸变化或item高度变化需要重新计算高度, 更新所有已渲染item top
-  const callback = debounce(function (e) {
+  const callback = debounceRAF(function (e) {
     updateItemSize(e.map((el) => el.target))
-  }, debounceCalcTime || 60)
+  })
 
   const resizeObserver = new ResizeObserver(callback)
 
@@ -69,7 +70,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
       sourceList.value?.forEach((el, index) => {
         keyIndexObj[el[keyField]] = index
         if (!itemSizeMap.get(el[keyField])) {
-          itemSizeMap.set(el[keyField], { data: el, height: itemHeight, top: 0 })
+          itemSizeMap.set(el[keyField], { data: el, height: itemHeight })
         }
       })
 
@@ -108,6 +109,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     keyIndexObj = {}
     startIndex = 0
     bufferStartIndex = -1
+    chunkList = []
+    chunkChangedIndexList?.clear()
     updateData()
     clearWatch && resizeObserver?.disconnect()
     clearWatch && scrollContainerEl?.removeEventListener('scroll', handleScroll)
@@ -127,7 +130,6 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     const topKey = binarySearch(scrollTop)
     if (!topKey || startTopKey == topKey) return
     startIndex = keyIndexObj[topKey]
-
     //实时计算数据，更新高度，top
     await updateData()
     transformToStart()
@@ -157,13 +159,13 @@ export default function useVirtualList(dataSourceRef, config = {}) {
       if (getItemHeight(key) != ofsh) {
         changeFlag = true
         setItemSize(key, { height: ofsh })
+        chunkChangedIndexList.add(getChunkIndex(keyIndexObj[key]))
       }
     }
 
     if (!changeFlag) return
     updateItemOffset(isCalcAll)
-    //更新时间不固定，会导致高度，滚动错位，需要再次计算
-    transformToStart()
+    transformToStart() //更新时间不固定，会导致高度，滚动错位，需要再次计算
     updateHeight()
   }
 
@@ -182,18 +184,51 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   //计算所有已渲染的item top值, 主要性能瓶颈
   const updateItemOffset = function (isCalcAll = false) {
     if (!sourceList.value?.length) return
-    //获取最新渲染列表，开始item的top，向下批量更新
-    const position = isCalcAll ? 0 : bufferStartIndex
-    let bufferStartTop = isCalcAll ? 0 : getItemTop(getItemKey(position))
-    for (let index = position; index < sourceList.value.length; index++) {
-      const itemKey = getItemKey(index)
-      setItemSize(itemKey, { top: bufferStartTop })
-      const offsetHeight = getItemHeight(itemKey)
-      bufferStartTop += offsetHeight
+    if (isCalcAll) {
+      chunkList = []
+      const count = Math.ceil(sourceList.value.length / chunkSize)
+      let top = 0
+
+      for (let i = 0; i < count; i++) {
+        const start = i * chunkSize
+        const end = Math.min(start + chunkSize, sourceList.value.length)
+
+        let height = 0
+        let prefixSums = []
+        for (let j = start; j < end; j++) {
+          prefixSums.push(height)
+          height += getItemHeight(getItemKey(j))
+        }
+
+        chunkList.push({ start, end, top, height, prefixSums })
+        top += height
+      }
+    } else {
+      chunkChangedIndexList.forEach((index) => {
+        const chunk = chunkList[index]
+        let height = 0
+        let prefixSums = []
+        for (let i = chunk.start; i < chunk.end; i++) {
+          const itemKey = getItemKey(i)
+          const offsetHeight = getItemHeight(itemKey)
+          prefixSums.push(height)
+          height += offsetHeight
+        }
+
+        chunk.prefixSums = prefixSums
+        const diff = height - chunk.height
+        chunk.height = height
+        if (diff > 1) {
+          for (let i = index + 1; i < chunkList.length; i++) {
+            chunkList[i].top += diff
+          }
+        }
+      })
     }
+
+    chunkChangedIndexList.clear()
   }
 
-  // 二分查找算法，配合检索虚拟列表scrolltop魔改，非原版通用
   function binarySearch(scrollTop) {
     let left = 0
     let right = sourceList.value.length - 1
@@ -208,9 +243,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   }
 
   function scrollTo(index) {
-    const itemKey = getItemKey(index)
-    if (!itemKey || getItemTop(itemKey) < 0 || !scrollContainerEl) return
-    requestAnimationFrame(() => (scrollContainerEl.scrollTop = getItemTop(itemKey)))
+    scrollContainerEl && requestAnimationFrame(() => (scrollContainerEl.scrollTop = getItemTop(getItemKey(index))))
   }
 
   return { initVirtualList, sliceData, scrollTo }
