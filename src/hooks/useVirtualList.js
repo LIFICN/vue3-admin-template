@@ -155,8 +155,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     let changeFlag = itemResized || false
     for (let index = 0; index < els.length; index++) {
       const ofsh = els[index]?.offsetHeight
-      const key = sliceData.value[index][keyField]
-      if (getItemHeight(key) != ofsh) {
+      const key = sliceData.value[index]?.[keyField] || ''
+      if (key && getItemHeight(key) != ofsh) {
         changeFlag = true
         setItemSize(key, { height: ofsh })
         chunkChangedIndexList.add(getChunkIndex(keyIndexObj[key]))
@@ -218,7 +218,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
         chunk.prefixSums = prefixSums
         const diff = height - chunk.height
         chunk.height = height
-        if (diff > 1) {
+        if (Math.abs(diff) > 1) {
           for (let i = index + 1; i < chunkList.length; i++) {
             chunkList[i].top += diff
           }
