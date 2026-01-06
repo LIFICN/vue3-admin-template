@@ -98,8 +98,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     phantomDivEl = document.createElement('div')
     phantomDivEl.style.height = `${sourceList.value.length * itemHeight || 0}px`
     scrollContainerEl.appendChild(phantomDivEl)
-    scrollContainerEl.style.position = 'relative'
-    contentContainerEl.style.cssText += 'position:absolute;top:0;left:0;width:100%;'
+    scrollContainerEl.style.cssText += 'position:relative;overflow-anchor: none;-webkit-overflow-scrolling: touch;'
+    contentContainerEl.style.cssText += 'position:absolute;top:0;left:0;width:100%;will-change: transform;'
     needUpdate.value = true
   }
 
@@ -126,12 +126,11 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   const handleScroll = debounceRAF(async function (e) {
     const scrollTop = e.target.scrollTop
     const startTopKey = getItemKey(startIndex)
-    //根据已渲染的item key，二分查找匹配符合scrolltop的key，计算出符合的index
     const topKey = binarySearch(scrollTop)
     if (!topKey || startTopKey == topKey) return
     startIndex = keyIndexObj[topKey]
-    //实时计算数据，更新高度，top
     await updateData()
+    //异步执行transformToStart会在某些高度场景会触发chrome滚动锚点补偿(苹果正常),会导致scroll无限循环,使用overflow-anchor: none解决
     transformToStart()
   })
 
@@ -142,8 +141,8 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     //计算结束索引
     let end = Math.min(startIndex + (size || 10) + nBufSize, sourceList.value.length)
     sliceData.value = sourceList.value.slice(bufferStartIndex, end)
-    await nextTick()
     resizeObserver?.disconnect()
+    await nextTick()
     getCurrentRenderedItem().forEach((el) => resizeObserver?.observe(el))
   }
 
@@ -218,7 +217,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
         chunk.prefixSums = prefixSums
         const diff = height - chunk.height
         chunk.height = height
-        if (Math.abs(diff) > 1) {
+        if (Math.abs(diff) > 0) {
           for (let i = index + 1; i < chunkList.length; i++) {
             chunkList[i].top += diff
           }
