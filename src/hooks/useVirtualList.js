@@ -36,6 +36,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   const chunkChangedIndexList = new Set() //缓存数据变更索引
   const itemSizeMap = new Map()
 
+  const getCurrentRenderedItem = () => Array.from(contentContainerEl?.querySelectorAll(itemContainer) || [])
   const getItemHeight = (key) => itemSizeMap.get(key)?.height || itemHeight || 0
   const getChunkIndex = (index) => Math.floor(index / chunkSize)
   const getItemTop = (key) => {
@@ -49,10 +50,7 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   const setItemSize = (key, obj = {}) => itemSizeMap.set(key, { ...itemSizeMap.get(key), ...obj })
   const getItemKey = (index) => (sourceList.value[index] && sourceList.value[index][keyField]) || ''
 
-  const callback = debounceRAF(function (e) {
-    updateItemSize(e.map((el) => el.target))
-  })
-
+  const callback = debounceRAF((e) => updateItemSize(e.map((el) => el.target)))
   const resizeObserver = new ResizeObserver(callback)
 
   watch(
@@ -84,9 +82,6 @@ export default function useVirtualList(dataSourceRef, config = {}) {
     },
     { immediate: true },
   )
-
-  //获取当前已渲染的item dom
-  const getCurrentRenderedItem = () => Array.from(contentContainerEl?.querySelectorAll(itemContainer) || [])
 
   const initVirtualList = async () => {
     await disposeAll() //销毁上一次的
@@ -135,12 +130,21 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   })
 
   async function updateData() {
-    let nBufSize = bufferSize || 10
-    //计算起始索引
-    bufferStartIndex = Math.max(startIndex - nBufSize, 0)
-    //计算结束索引
-    let end = Math.min(startIndex + (size || 10) + nBufSize, sourceList.value.length)
-    sliceData.value = sourceList.value.slice(bufferStartIndex, end)
+    const nBufSize = bufferSize || 10
+    const visibleCount = size || 10
+    let start = Math.max(startIndex - nBufSize, 0)
+    let end = Math.min(startIndex + visibleCount + nBufSize, sourceList.value.length)
+    //前后缓冲区一定要对称,不然会有抖动,缓冲区不足向上或者向下补充
+    const requiredLength = visibleCount + nBufSize + nBufSize
+    const actualLength = end - start
+    if (requiredLength > actualLength) {
+      let missing = requiredLength - actualLength
+      if (start == 0) end = Math.min(end + missing, sourceList.value.length)
+      else if (end == sourceList.value.length) start = Math.max(start - missing, 0)
+    }
+
+    bufferStartIndex = start
+    sliceData.value = sourceList.value.slice(start, end)
     resizeObserver?.disconnect()
     await nextTick()
     getCurrentRenderedItem().forEach((el) => resizeObserver?.observe(el))
@@ -175,7 +179,6 @@ export default function useVirtualList(dataSourceRef, config = {}) {
   })
 
   function transformToStart() {
-    //动态定位到start位置,由于添加了缓冲区所以滚动的top取值应该是缓冲区第一项(bufferStartIndex)的top值
     const transformStr = `translateY(${getItemTop(getItemKey(bufferStartIndex))}px)`
     if (!contentContainerEl.style.cssText.includes(transformStr)) contentContainerEl.style.transform = transformStr
   }
